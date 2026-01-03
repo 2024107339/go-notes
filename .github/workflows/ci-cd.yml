@@ -1,0 +1,40 @@
+name: Go-Notes CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: Integração Contínua (CI)
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+
+    - name: Compilar Aplicação
+      run: go build -v ./...
+
+    - name: Executar Testes
+      run: go test -v ./...
+
+  # Job 2: Deployment Contínuo (CD)
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # Apenas corre se o CI passar
+    if: success() 
+    steps:
+    - name: Deployment via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        port: 22
+        script: /opt/go-notes/deploy.sh
